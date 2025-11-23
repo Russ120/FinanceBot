@@ -1,7 +1,7 @@
 # bot.py - Bot mínimo con python-telegram-bot v20
 # ⚠️ No subas tu TOKEN a internet/Repos públicos
 # bot_regex.py
-from telegram import Update
+# from pruebas.telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 import re
 import os
