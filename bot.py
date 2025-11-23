@@ -10,6 +10,9 @@ from telegram.ext import (
 import re
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 app_tg = Application.builder().token(TOKEN).build()

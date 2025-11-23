@@ -2,13 +2,14 @@
 import os
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 from telegram import Update
 from bot import app_tg
 
-load_dotenv()
+from dotenv import load_dotenv
 
+load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
