@@ -1,61 +1,33 @@
-# bot.py - Bot mínimo con python-telegram-bot v20
-# ⚠️ No subas tu TOKEN a internet/Repos públicos
-# bot_regex.py
-# from pruebas.telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
-import re
+# main.py
 import os
-TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+from fastapi import FastAPI, Request
+from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+from telegram import Update
+from bot import app_tg
 
-# TOKEN = "8551527838:AAGTdlY2XsGPs2Pye2XwDQvZZffdnIwQo3o"
+load_dotenv()
 
-# /help
-async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Comandos:\n/start - saludo\n/help - ayuda\n/precio - precio de hoy")
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hola! Escríbeme: hola | precio | adios")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await app_tg.initialize()
+    await app_tg.start()
+    print("Bot inicializado en Vercel 🚀")
+    yield
+    await app_tg.stop()
+    await app_tg.shutdown()
 
-async def hola(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("¡Holaaa! ¿Qué tal? 😎")
+app = FastAPI(lifespan=lifespan)
 
-async def precio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("El precio de hoy es RD$499. (demo)")
+@app.post("/api/telegram")
+async def telegram_webhook(request: Request):
+    data = await request.json()
+    update = Update.de_json(data, app_tg.bot)
+    await app_tg.process_update(update)
+    return {"ok": True}
 
-async def adios(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("¡Nos vemos! 👋")
-
-async def desconocido(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("No te entendí. Prueba: hola, precio o adios.")
-
-
-
-
-
-def main():
-    app = Application.builder().token(TOKEN).build()
-
-    # Comandos
-    app.add_handler(CommandHandler("help", help_cmd))
-
-
-    pp = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("precio", precio))
-
-
-    # Coincidencias por texto/regex (ignora mayúsculas)
-    app.add_handler(MessageHandler(filters.Regex(re.compile(r"^hola$", re.IGNORECASE)), hola))
-    app.add_handler(MessageHandler(filters.Regex(re.compile(r"^precio$", re.IGNORECASE)), precio))
-    app.add_handler(MessageHandler(filters.Regex(re.compile(r"^adios?$", re.IGNORECASE)), adios))
-
-    # Cualquier otra cosa
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, desconocido))
-
-
-    print("Bot corriendo... Ctrl+C para parar")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+@app.get("/")
+async def home():
+    return {"message": "Telegram Bot activo en Vercel 🟢"}
